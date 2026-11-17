@@ -8,6 +8,7 @@ import authRoutes from "./routes/authRoutes.js";
 import errorHandler from "./middleware/errorMiddleware.js";
 
 const app = express();
+console.log("Frontend CORS Origin:", env.FRONTEND_URL);
 
 // Security middleware
 app.use(helmet());
@@ -43,7 +44,6 @@ app.use((req, res) => {
     message: "Resource not found.",
   });
 });
-
 // Centralized error handler
 app.use(errorHandler);
 

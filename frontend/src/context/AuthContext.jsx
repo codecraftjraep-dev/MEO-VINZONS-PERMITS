@@ -33,8 +33,11 @@ export function AuthProvider({ children }) {
     const response = await authApi.login(credentials);
     const loggedInUser = response.data?.user || null;
 
-    setUser(loggedInUser);
+    if (!loggedInUser) {
+      throw new Error("Unable to retrieve authenticated user.");
+    }
 
+    setUser(loggedInUser);
     return loggedInUser;
   };
 

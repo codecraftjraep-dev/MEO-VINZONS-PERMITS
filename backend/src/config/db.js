@@ -1,5 +1,10 @@
+
 import mongoose from "mongoose";
+import dns from "node:dns";
 import env from "./env.js";
+
+// Use Google's public DNS to resolve MongoDB Atlas SRV records
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 
 const connectDB = async () => {
   try {
@@ -8,7 +13,7 @@ const connectDB = async () => {
     console.log("MongoDB connected successfully.");
     console.log(`Database: ${connection.connection.name}`);
   } catch (error) {
-    console.error("MongoDB connection failed:", error.message);
+    console.error("MongoDB connection failed:", error);
     process.exit(1);
   }
 };

@@ -1,17 +1,16 @@
+
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
-import dotenv from "dotenv";
 import User from "../models/User.js";
-
-dotenv.config();
+import connectDB from "../config/db.js";
 
 const createAdmin = async () => {
   try {
-    await mongoose.connect(process.env.MONGO_URI);
+    await connectDB();
 
-    const name = "Pogi Ako";
-    const email = "meo.vinzons@gmail.com";
-    const password = "MEOvinzons123";
+    const name = "Admin";
+    const email = "admin@gmail.com";
+    const password = "ChangeThisPassword123!";
 
     const existingAdmin = await User.findOne({ email });
 

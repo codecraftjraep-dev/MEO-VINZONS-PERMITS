@@ -5,27 +5,57 @@ import DashboardPage from "./pages/DashboardPage";
 import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
+import IssuePermitPage from "./pages/IssuePermitPage";
+
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public route */}
         <Route path="/login" element={<LoginPage />} />
 
-        {/* Protected routes */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
 
-            {/* Add your other protected pages here */}
+            {/* Temporary placeholders until these pages are created */}
+            <Route
+              path="/permits"
+              element={<Placeholder title="Permit Records" />}
+            />
+
+            <Route
+              path="/permits/new"
+               element={<IssuePermitPage />}
+            />        
+
+
+            <Route
+              path="/users"
+              element={<Placeholder title="User Management" />}
+            />
+
+            <Route
+              path="/audit-logs"
+              element={<Placeholder title="Audit Logs" />}
+            />
           </Route>
         </Route>
 
-        {/* Default route */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </BrowserRouter>
+  );
+}
+
+function Placeholder({ title }) {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-sm">
+      <h1 className="text-xl font-bold text-slate-900">{title}</h1>
+      <p className="mt-2 text-sm text-slate-500">
+        This module is under development.
+      </p>
+    </div>
   );
 }
