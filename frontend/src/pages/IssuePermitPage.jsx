@@ -11,7 +11,7 @@ import {
   Printer,
   ClipboardCheck,
 } from "lucide-react";
-
+import permitApi from "../api/permitApi";
 const initialOwner = {
   ownerType: "individual",
   name: "",
@@ -127,7 +127,7 @@ export default function IssuePermitPage() {
 
   const [showPreview, setShowPreview] = useState(false);
   const [previewData, setPreviewData] = useState(null);
-
+  const [isSaving, setIsSaving] = useState(false);
   const updateField = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -294,7 +294,31 @@ export default function IssuePermitPage() {
 
   const isBuildingPermit = form.permitType === "building";
   const isOccupancy = form.permitType === "occupancy";
+  const handleConfirmSave = async () => {
+    if (!previewData || isSaving) return;
 
+    setIsSaving(true);
+
+    try {
+      const result = await permitApi.create(previewData);
+
+      alert(result.message || "Permit successfully saved.");
+
+      setShowPreview(false);
+      setPreviewData(null);
+      resetForm();
+    } catch (error) {
+      console.error("Permit saving error:", error);
+
+      alert(
+        error.response?.data?.message ||
+          error.message ||
+          "Unable to save permit. Please try again.",
+      );
+    } finally {
+      setIsSaving(false);
+    }
+  };
   return (
     <div className="space-y-6">
       {/* Page Heading */}
@@ -1030,15 +1054,8 @@ export default function IssuePermitPage() {
         <PermitPreview
           data={previewData}
           onClose={() => setShowPreview(false)}
-          onConfirmSave={() => {
-            console.log("Confirmed Permit Data:", previewData);
-
-            alert(
-              "Certificate reviewed. Database saving will be connected next.",
-            );
-
-            setShowPreview(false);
-          }}
+          onConfirmSave={handleConfirmSave}
+          isSaving={isSaving}
         />
       )}
     </div>

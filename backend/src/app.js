@@ -7,6 +7,10 @@ import env from "./config/env.js";
 import authRoutes from "./routes/authRoutes.js";
 import errorHandler from "./middleware/errorMiddleware.js";
 
+
+import permitRoutes from "./routes/permitRoutes.js";
+
+
 const app = express();
 console.log("Frontend CORS Origin:", env.FRONTEND_URL);
 
@@ -22,6 +26,7 @@ app.use(
 
 // Request parsing middleware
 app.use(express.json({ limit: "1mb" }));
+app.use("/api/permits", permitRoutes);
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 

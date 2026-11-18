@@ -9,7 +9,12 @@ import BuildingPermitContent from "./BuildingPermitContent";
 import OccupancyPermitContent from "./OccupancyPermitContent";
 
 import meoLogo from "../../assets/images/meo-logo.jpg";
-export default function PermitPreview({ data, onClose, onConfirmSave }) {
+export default function PermitPreview({
+  data,
+  onClose,
+  onConfirmSave,
+  isSaving = false,
+}) {
   const permitRef = useRef(null);
 
   const [isDownloading, setIsDownloading] = useState(false);
@@ -294,10 +299,11 @@ export default function PermitPreview({ data, onClose, onConfirmSave }) {
         <button
           type="button"
           onClick={onConfirmSave}
-          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-brand-700"
+          disabled={isSaving}
+          className="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-5 py-2.5 text-xs font-semibold text-white hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
         >
           <CheckCircle2 size={16} />
-          Confirm Save
+          {isSaving ? "Saving Permit..." : "Confirm Save"}
         </button>
       </div>
     </div>
