@@ -7,7 +7,7 @@ import env from "./config/env.js";
 import authRoutes from "./routes/authRoutes.js";
 import errorHandler from "./middleware/errorMiddleware.js";
 
-
+import settingsRoutes from "./routes/settingsRoutes.js";
 import permitRoutes from "./routes/permitRoutes.js";
 
 
@@ -27,9 +27,10 @@ app.use(
 // Request parsing middleware
 app.use(express.json({ limit: "1mb" }));
 app.use("/api/permits", permitRoutes);
+app.use("/api/settings", settingsRoutes);
+
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
-
 // API routes
 app.use("/api/auth", authRoutes);
 

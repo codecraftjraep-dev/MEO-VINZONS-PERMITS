@@ -1,7 +1,7 @@
+import { useEffect, useState } from "react";
+import permitApi from "../../api/permitApi";
 
 export default function BuildingPermitContent({ data }) {
-  const classifications = data.classifications || [];
-
   const formatAmount = (amount) => {
     if (amount === null || amount === undefined || amount === "") {
       return "________________";
@@ -12,21 +12,38 @@ export default function BuildingPermitContent({ data }) {
       maximumFractionDigits: 2,
     })}`;
   };
+  const classifications = data.classifications || [];
 
+  const [signatory, setSignatory] = useState({
+    name: "",
+    position: "BUILDING OFFICIAL",
+  });
+
+  useEffect(() => {
+    const fetchSignatory = async () => {
+      try {
+        const response = await permitApi.getSignatories();
+
+        setSignatory({
+          name: response.data?.building?.name || "",
+          position: response.data?.building?.position || "BUILDING OFFICIAL",
+        });
+      } catch (error) {
+        console.error("Failed to load building signatory:", error);
+      }
+    };
+
+    fetchSignatory();
+  }, []);
   return (
     <>
-     
-
       {/* Legal Statement */}
       <p className="building-permit-legal-text">
         This PERMIT is issued pursuant to Sections{" "}
         <strong>207, 301, 302 and 304</strong> of the{" "}
-        <strong>
-          National Building Code of the Philippines (PD 1096)
-        </strong>
-        , its <strong>Revised IRR</strong>, other{" "}
-        <strong>Referral Codes</strong> and its{" "}
-        <strong>Terms and Conditions</strong>.
+        <strong>National Building Code of the Philippines (PD 1096)</strong>,
+        its <strong>Revised IRR</strong>, other <strong>Referral Codes</strong>{" "}
+        and its <strong>Terms and Conditions</strong>.
       </p>
 
       {/* Project and Owner Details */}
@@ -134,17 +151,17 @@ export default function BuildingPermitContent({ data }) {
       {/* Signatory */}
       <div className="building-permit-signatory">
         <div className="building-permit-signature-line">
-          <strong>
-            {data.buildingOfficialName || "MARK ANTHONY A. REMOROZA"}
+          <strong className="signatory-name">
+            {data.buildingOfficialName ||
+              signatory.name ||
+              "____________________"}
           </strong>
-          <span>BUILDING OFFICIAL</span>
+          <span className="signatory-position">{signatory.position}</span>
         </div>
 
         <div className="building-permit-signatory-date">
           <span>Date:</span>
-          <strong>
-            {data.buildingOfficialDate || "____________________"}
-          </strong>
+          <strong>{data.buildingOfficialDate || "____________________"}</strong>
         </div>
       </div>
     </>

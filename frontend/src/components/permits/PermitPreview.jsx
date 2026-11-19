@@ -240,7 +240,18 @@ export default function PermitPreview({
                 {!isBuilding && (
                   <div>
                     <strong>Fees Paid:</strong>
-                    <span>{data.occupancyFeesPaid || "________________"}</span>
+                    <span>
+                      {data.occupancyFeesPaid != null &&
+                      data.occupancyFeesPaid !== ""
+                        ? `₱${Number(data.occupancyFeesPaid).toLocaleString(
+                            "en-PH",
+                            {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            },
+                          )}`
+                        : "________________"}
+                    </span>{" "}
                   </div>
                 )}
 

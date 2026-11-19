@@ -7,7 +7,12 @@ import {
   currentUser,
   createNewUser,
   updatePassword,
+  listUsers,
+  editUser,
+  changeUserStatus,
+  adminResetPassword,
 } from "../controllers/authController.js";
+
 
 import authenticate from "../middleware/authMiddleware.js";
 import authorize from "../middleware/roleMiddleware.js";
@@ -18,6 +23,9 @@ import {
   loginSchema,
   createUserSchema,
   changePasswordSchema,
+  updateUserSchema,
+  updateUserStatusSchema,
+  resetUserPasswordSchema,
 } from "../validators/authValidator.js";
 
 const router = express.Router();
@@ -46,6 +54,39 @@ router.post(
   validate(createUserSchema),
   asyncHandler(createNewUser),
 );
+
+
+router.get(
+  "/users",
+  authenticate,
+  authorize("admin"),
+  asyncHandler(listUsers),
+);
+
+router.patch(
+  "/users/:id",
+  authenticate,
+  authorize("admin"),
+  validate(updateUserSchema),
+  asyncHandler(editUser),
+);
+
+router.patch(
+  "/users/:id/status",
+  authenticate,
+  authorize("admin"),
+  validate(updateUserStatusSchema),
+  asyncHandler(changeUserStatus),
+);
+
+router.patch(
+  "/users/:id/reset-password",
+  authenticate,
+  authorize("admin"),
+  validate(resetUserPasswordSchema),
+  asyncHandler(adminResetPassword),
+);
+
 
 router.patch(
   "/change-password",

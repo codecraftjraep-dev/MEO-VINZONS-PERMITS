@@ -4,7 +4,6 @@ import {
   Files,
   FilePlus2,
   Users,
-  ClipboardList,
   Settings,
   X,
   HardHat,
@@ -23,7 +22,7 @@ const navigation = [
     label: "ADMINISTRATION",
     items: [
       { name: "User Management", path: "/users", icon: Users },
-      { name: "Audit Logs", path: "/audit-logs", icon: ClipboardList },
+      { name: "Settings", path: "/settings", icon: Settings },
     ],
   },
 ];
@@ -103,19 +102,13 @@ export default function Sidebar({ open, onClose }) {
         </div>
 
         <div className="border-t border-slate-100 p-4">
-          <div className="flex items-center gap-3 rounded-xl bg-slate-50 p-3">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-200 text-slate-600">
-              <Settings size={18} />
-            </div>
-
-            <div>
-              <p className="text-xs font-semibold text-slate-700">
-                System Administration
-              </p>
-              <p className="text-[10px] text-slate-400">
-                Permit Archive System
-              </p>
-            </div>
+          <div className="rounded-xl bg-slate-50 p-3">
+            <p className="text-xs font-semibold text-slate-700">
+              System Administration
+            </p>
+            <p className="mt-1 text-[10px] text-slate-400">
+              Permit Archive System
+            </p>
           </div>
         </div>
       </aside>

@@ -39,3 +39,34 @@ export const changePasswordSchema = z.object({
     newPassword: passwordSchema,
   }),
 });
+
+export const updateUserSchema = z.object({
+  body: z.object({
+    name: z.string().trim().min(2).max(120).optional(),
+    email: z
+      .string()
+      .email()
+      .max(254)
+      .transform((v) => v.trim().toLowerCase())
+      .optional(),
+    role: z.enum(["admin", "encoder", "viewer"]).optional(),
+  }).refine(
+    (data) =>
+      data.name !== undefined ||
+      data.email !== undefined ||
+      data.role !== undefined,
+    { message: "At least one field must be provided." },
+  ),
+});
+
+export const updateUserStatusSchema = z.object({
+  body: z.object({
+    isActive: z.boolean(),
+  }),
+});
+
+export const resetUserPasswordSchema = z.object({
+  body: z.object({
+    newPassword: passwordSchema,
+  }),
+});

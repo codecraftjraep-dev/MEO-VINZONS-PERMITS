@@ -7,7 +7,9 @@ import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import IssuePermitPage from "./pages/IssuePermitPage";
 import PermitsPage from "./pages/PermitsPage";
+import SettingsPage from "./pages/SettingsPage";
 
+import UsersPage from "./pages/UsersPage";
 export default function App() {
   return (
     <BrowserRouter>
@@ -22,15 +24,8 @@ export default function App() {
 
             <Route path="/permits/new" element={<IssuePermitPage />} />
 
-            <Route
-              path="/users"
-              element={<Placeholder title="User Management" />}
-            />
-
-            <Route
-              path="/audit-logs"
-              element={<Placeholder title="Audit Logs" />}
-            />
+            <Route path="/users" element={<UsersPage />} />
+            <Route path="/settings" element={<SettingsPage />} />
           </Route>
         </Route>
 

@@ -1,4 +1,31 @@
+
+import { useEffect, useState } from "react";
+import permitApi from "../../api/permitApi";
+
 export default function OccupancyPermitContent({ data }) {
+  const [signatory, setSignatory] = useState({
+    name: "",
+    position: "BUILDING OFFICIAL",
+  });
+
+  useEffect(() => {
+    const fetchSignatory = async () => {
+      try {
+        const response = await permitApi.getSignatories();
+
+        setSignatory({
+          name: response.data?.occupancy?.name || "",
+          position:
+            response.data?.occupancy?.position || "BUILDING OFFICIAL",
+        });
+      } catch (error) {
+        console.error("Failed to load occupancy signatory:", error);
+      }
+    };
+
+    fetchSignatory();
+  }, []);
+
   const formattedDate = data.dateIssued
     ? new Date(data.dateIssued)
         .toLocaleDateString("en-US", {
@@ -13,7 +40,6 @@ export default function OccupancyPermitContent({ data }) {
 
   return (
     <>
-      {/* Certificate of Occupancy Content */}
       <div className="occupancy-permit-content">
         <p className="building-permit-legal-text">
           This is to certify that the building/structure which has been designed
@@ -28,7 +54,6 @@ export default function OccupancyPermitContent({ data }) {
           .
         </p>
 
-        {/* Project and Owner Details */}
         <div className="building-permit-details building-permit-details-inset">
           <div className="building-permit-detail-row">
             <strong>Name of Owner:</strong>
@@ -69,13 +94,11 @@ export default function OccupancyPermitContent({ data }) {
             <span>{data.projectLocation || "________________"}</span>
           </div>
 
-          {/* Date of Completion */}
           <div className="building-permit-detail-row">
             <strong>Date of Completion:</strong>
             <span>{data.dateOfCompletion || "________________"}</span>
           </div>
 
-          {/* Occupancy and Classification */}
           <div className="building-permit-occupancy-section">
             <div className="occupancy-field">
               <strong>Use or Character of Occupancy:</strong>
@@ -117,6 +140,7 @@ export default function OccupancyPermitContent({ data }) {
             </div>
           </div>
         </div>
+
         <p className="occupancy-permit-legal-text">
           The Owner shall properly maintain the building/structure to enchance
           its architectural well-being, structural stability, electrical,
@@ -131,9 +155,7 @@ export default function OccupancyPermitContent({ data }) {
           Philippines (PD 1096), its Revised IRR, other Referral Codes.
         </p>
 
-        {/* Certification and Signatory */}
         <div className="occupancy-permit-certification-section">
-          {/* Certification - Left Side */}
           <div className="occupancy-permit-certification">
             <p className="occupancy-permit-legal-text">
               <strong>
@@ -144,13 +166,16 @@ export default function OccupancyPermitContent({ data }) {
             </p>
           </div>
 
-          {/* Signatory - Right Side */}
           <div className="building-permit-signatory">
             <div className="building-permit-signature-line">
-              <strong>
-                {data.buildingOfficialName || "MARK ANTHONY A. REMOROZA"}
+              <strong className="signatory-name">
+                {data.buildingOfficialName ||
+                  signatory.name ||
+                  "____________________"}
               </strong>
-              <span>BUILDING OFFICIAL</span>
+              <span className="signatory-position">
+                {signatory.position}
+              </span>
             </div>
 
             <div className="building-permit-signatory-date">
