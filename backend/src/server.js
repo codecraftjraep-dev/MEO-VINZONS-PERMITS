@@ -6,17 +6,19 @@ const startServer = async () => {
   try {
     await connectDB();
 
-    app.listen(env.PORT, "0.0.0.0", () => {
+    const PORT = process.env.PORT || env.PORT || 5000;
+
+    app.listen(PORT, "0.0.0.0", () => {
       console.log("-----------------------------------");
       console.log("MEO PERMIT ARCHIVE API");
       console.log("-----------------------------------");
-      console.log(`Server: http://localhost:${env.PORT}`);
-      console.log(`Health: http://localhost:${env.PORT}/health`);
+      console.log(`Port: ${PORT}`);
+      console.log(`Health: /health`);
       console.log(`Mode: ${env.NODE_ENV}`);
       console.log("-----------------------------------");
     });
   } catch (error) {
-    console.error("Server startup failed:", error.message);
+    console.error("Server startup failed:", error);
     process.exit(1);
   }
 };

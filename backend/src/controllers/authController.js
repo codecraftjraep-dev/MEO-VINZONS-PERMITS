@@ -1,4 +1,3 @@
-
 import {
   createUser,
   loginUser,
@@ -12,12 +11,21 @@ import {
 
 import env from "../config/env.js";
 
+const isProduction = env.NODE_ENV === "production";
+
 const cookieOptions = {
   httpOnly: true,
-  secure: env.COOKIE_SECURE,
-  sameSite: "strict",
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
   path: "/",
   maxAge: 8 * 60 * 60 * 1000,
+};
+
+const clearCookieOptions = {
+  httpOnly: cookieOptions.httpOnly,
+  secure: cookieOptions.secure,
+  sameSite: cookieOptions.sameSite,
+  path: cookieOptions.path,
 };
 
 export const login = async (req, res) => {
@@ -42,10 +50,7 @@ export const login = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
-  res.clearCookie(env.COOKIE_NAME, {
-    ...cookieOptions,
-    maxAge: undefined,
-  });
+  res.clearCookie(env.COOKIE_NAME, clearCookieOptions);
 
   res.status(200).json({
     success: true,
@@ -84,10 +89,7 @@ export const updatePassword = async (req, res) => {
 
   await changeUserPassword(req.user._id, currentPassword, newPassword);
 
-  res.clearCookie(env.COOKIE_NAME, {
-    ...cookieOptions,
-    maxAge: undefined,
-  });
+  res.clearCookie(env.COOKIE_NAME, clearCookieOptions);
 
   res.status(200).json({
     success: true,
@@ -137,13 +139,11 @@ export const changeUserStatus = async (req, res) => {
 };
 
 export const adminResetPassword = async (req, res) => {
-  await resetUserPassword(
-    req.params.id,
-    req.validated.body.newPassword,
-  );
+  await resetUserPassword(req.params.id, req.validated.body.newPassword);
 
   res.status(200).json({
     success: true,
-    message: "User password reset successfully. Their existing sessions have been invalidated.",
+    message:
+      "User password reset successfully. Their existing sessions have been invalidated.",
   });
 };
