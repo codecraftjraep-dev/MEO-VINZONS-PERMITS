@@ -1,91 +1,169 @@
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Plus,
   ArrowUpRight,
-  FileText,
   Building2,
-  Zap,
-  Droplets,
-  Wrench,
-  Construction,
-  Fence,
+  FileText,
   Search,
   CalendarDays,
-  MoreHorizontal,
+  RefreshCw,
 } from "lucide-react";
 
 import PageHeader from "../components/ui/PageHeader";
 import StatCard from "../components/ui/StatCard";
 import StatusBadge from "../components/ui/StatusBadge";
+import permitApi from "../api/permitApi";
 
-const recentPermits = [
-  {
-    id: "MEO-BP-2026-00124",
-    type: "Building Permit",
-    applicant: "Juan Dela Cruz",
-    project: "Two-Storey Residential Building",
-    barangay: "Aguit-it",
-    date: "Nov 15, 2026",
-    status: "active",
-  },
-  {
-    id: "MEO-EP-2026-00085",
-    type: "Electrical Permit",
-    applicant: "Maria Santos",
-    project: "Electrical Installation",
-    barangay: "Calangcawan",
-    date: "Nov 14, 2026",
-    status: "active",
-  },
-  {
-    id: "MEO-PP-2026-00062",
-    type: "Plumbing Permit",
-    applicant: "Pedro Reyes",
-    project: "Water Supply Installation",
-    barangay: "Vinzons",
-    date: "Nov 12, 2026",
-    status: "expired",
-  },
-  {
-    id: "MEO-MP-2026-00031",
-    type: "Mechanical Permit",
-    applicant: "ABC Construction",
-    project: "Mechanical Equipment Installation",
-    barangay: "Singi",
-    date: "Nov 10, 2026",
-    status: "active",
-  },
-  {
-    id: "MEO-OP-2026-00018",
-    type: "Occupancy Permit",
-    applicant: "Carlos Mendoza",
-    project: "Commercial Building",
-    barangay: "Mangcayo",
-    date: "Nov 08, 2026",
-    status: "active",
-  },
-];
+const getPermitNumber = (permit) =>
+  permit.permitNo || permit.data?.permitNo || permit.data?.occupancyNo || "N/A";
 
-const permitTypes = [
-  { name: "Building", count: 425, icon: Building2 },
-  { name: "Electrical", count: 218, icon: Zap },
-  { name: "Plumbing", count: 184, icon: Droplets },
-  { name: "Mechanical", count: 96, icon: Wrench },
-  { name: "Excavation", count: 87, icon: Construction },
-  { name: "Fencing", count: 73, icon: Fence },
-  { name: "Demolition", count: 42, icon: FileText },
-  { name: "Occupancy", count: 123, icon: Building2 },
-];
+const getPermitDate = (permit) =>
+  permit.dateIssued ||
+  permit.data?.dateIssued ||
+  permit.data?.occupancyDateIssued ||
+  "";
+
+const getApplicant = (permit) => {
+  const owners = permit.owners || permit.data?.owners || [];
+
+  if (!owners.length) return "N/A";
+
+  return owners
+    .map((owner) => {
+      if (typeof owner === "string") return owner;
+      return owner.name || owner.fullName || "N/A";
+    })
+    .filter(Boolean)
+    .join(", ");
+};
+
+const formatDate = (date) => {
+  if (!date) return "N/A";
+
+  const parsedDate = new Date(date);
+
+  if (Number.isNaN(parsedDate.getTime())) return date;
+
+  return parsedDate.toLocaleDateString("en-US", {
+    month: "short",
+    day: "2-digit",
+    year: "numeric",
+  });
+};
+
+const getPermitTypeLabel = (type) =>
+  type === "building" ? "Building Permit" : "Certificate of Occupancy";
 
 export default function DashboardPage() {
-  const total = permitTypes.reduce((sum, item) => sum + item.count, 0);
+  const [permits, setPermits] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchPermits = async () => {
+    try {
+      setLoading(true);
+      setError("");
+
+      const response = await permitApi.getAll();
+
+      const records = Array.isArray(response)
+        ? response
+        : response.permits || response.data || [];
+
+      setPermits(records);
+    } catch (err) {
+      console.error("Failed to retrieve permits:", err);
+      setError(
+        err.response?.data?.message || "Unable to retrieve permit records.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPermits();
+  }, []);
+
+  const buildingPermits = useMemo(
+    () => permits.filter((permit) => permit.permitType === "building"),
+    [permits],
+  );
+
+  const occupancyPermits = useMemo(
+    () => permits.filter((permit) => permit.permitType === "occupancy"),
+    [permits],
+  );
+
+  const issuedThisMonth = useMemo(() => {
+    const now = new Date();
+
+    return permits.filter((permit) => {
+      const date = getPermitDate(permit);
+      if (!date) return false;
+
+      const issuedDate = new Date(date);
+
+      return (
+        !Number.isNaN(issuedDate.getTime()) &&
+        issuedDate.getMonth() === now.getMonth() &&
+        issuedDate.getFullYear() === now.getFullYear()
+      );
+    }).length;
+  }, [permits]);
+
+  const recentPermits = useMemo(
+    () =>
+      [...permits]
+        .sort((a, b) => {
+          const dateA = new Date(a.createdAt || getPermitDate(a) || 0);
+          const dateB = new Date(b.createdAt || getPermitDate(b) || 0);
+          return dateB - dateA;
+        })
+        .slice(0, 5),
+    [permits],
+  );
+
+  const total = permits.length;
+
+  const buildingPercentage =
+    total > 0 ? (buildingPermits.length / total) * 100 : 0;
+
+  const occupancyPercentage =
+    total > 0 ? (occupancyPermits.length / total) * 100 : 0;
+
+  const permitTypes = [
+    {
+      name: "Building Permit",
+      count: buildingPermits.length,
+      icon: Building2,
+      color: "text-brand-600 bg-brand-50",
+      percentage: buildingPercentage,
+    },
+    {
+      name: "Certificate of Occupancy",
+      count: occupancyPermits.length,
+      icon: FileText,
+      color: "text-emerald-600 bg-emerald-50",
+      percentage: occupancyPercentage,
+    },
+  ];
+
+  const chartBackground =
+    total === 0
+      ? "#e2e8f0"
+      : `conic-gradient(
+          #294f85 0% ${buildingPercentage}%,
+          #16a36b ${buildingPercentage}% 100%
+        )`;
 
   return (
     <div>
       <PageHeader
         eyebrow="MEO PERMIT MANAGEMENT"
         title="Dashboard"
-        description="Monitor permit records, issuance activity, and expiration status."
+        description="Monitor building permit and certificate of occupancy records."
         action={
           <Link
             to="/permits/new"
@@ -100,29 +178,29 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
           title="Total Permits"
-          value="1,248"
+          value={loading ? "..." : total.toLocaleString()}
           subtitle="All archived permit records"
           type="total"
         />
 
         <StatCard
-          title="Issued This Month"
-          value="86"
-          subtitle="Newly issued permits"
+          title="Building Permits"
+          value={loading ? "..." : buildingPermits.length.toLocaleString()}
+          subtitle="Recorded building permits"
           type="issued"
         />
 
         <StatCard
-          title="Expiring in 30 Days"
-          value="12"
-          subtitle="Requires attention"
+          title="Certificates of Occupancy"
+          value={loading ? "..." : occupancyPermits.length.toLocaleString()}
+          subtitle="Recorded occupancy certificates"
           type="expiring"
         />
 
         <StatCard
-          title="Revoked Permits"
-          value="04"
-          subtitle="Records marked as revoked"
+          title="Issued This Month"
+          value={loading ? "..." : issuedThisMonth.toLocaleString()}
+          subtitle="Based on recorded issue dates"
           type="revoked"
         />
       </div>
@@ -135,7 +213,7 @@ export default function DashboardPage() {
                 Recent Permit Records
               </h2>
               <p className="mt-1 text-xs text-slate-400">
-                Latest recorded permit issuances
+                Latest saved permit records
               </p>
             </div>
 
@@ -148,70 +226,107 @@ export default function DashboardPage() {
             </Link>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[720px] text-left">
-              <thead className="bg-slate-50">
-                <tr>
-                  {[
-                    "Permit Information",
-                    "Applicant",
-                    "Barangay",
-                    "Date Issued",
-                    "Status",
-                  ].map((heading) => (
-                    <th
-                      key={heading}
-                      className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400"
-                    >
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-
-              <tbody className="divide-y divide-slate-100">
-                {recentPermits.map((permit) => (
-                  <tr
-                    key={permit.id}
-                    className="transition hover:bg-slate-50/70"
-                  >
-                    <td className="px-5 py-4">
-                      <p className="whitespace-nowrap text-xs font-semibold text-slate-800">
-                        {permit.id}
-                      </p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {permit.type}
-                      </p>
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <p className="whitespace-nowrap text-xs font-medium text-slate-700">
-                        {permit.applicant}
-                      </p>
-                      <p className="mt-1 max-w-[180px] truncate text-[11px] text-slate-400">
-                        {permit.project}
-                      </p>
-                    </td>
-
-                    <td className="px-5 py-4 text-xs text-slate-500">
-                      {permit.barangay}
-                    </td>
-
-                    <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
-                      {permit.date}
-                    </td>
-
-                    <td className="px-5 py-4">
-                      <StatusBadge status={permit.status} />
-                    </td>
+          {loading ? (
+            <div className="flex items-center justify-center gap-2 p-12 text-sm text-slate-400">
+              <RefreshCw size={16} className="animate-spin" />
+              Loading permit records...
+            </div>
+          ) : error ? (
+            <div className="p-10 text-center">
+              <p className="text-sm text-red-600">{error}</p>
+              <button
+                type="button"
+                onClick={fetchPermits}
+                className="mt-3 text-xs font-semibold text-brand-600 hover:underline"
+              >
+                Try again
+              </button>
+            </div>
+          ) : recentPermits.length === 0 ? (
+            <div className="p-12 text-center">
+              <FileText size={34} className="mx-auto mb-3 text-slate-300" />
+              <p className="text-sm font-semibold text-slate-700">
+                No permit records found
+              </p>
+              <p className="mt-1 text-xs text-slate-400">
+                Saved permits will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[720px] text-left">
+                <thead className="bg-slate-50">
+                  <tr>
+                    {[
+                      "Permit Information",
+                      "Applicant",
+                      "Project Location",
+                      "Date Issued",
+                      "Category",
+                    ].map((heading) => (
+                      <th
+                        key={heading}
+                        className="px-5 py-3 text-[10px] font-bold uppercase tracking-wider text-slate-400"
+                      >
+                        {heading}
+                      </th>
+                    ))}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+
+                <tbody className="divide-y divide-slate-100">
+                  {recentPermits.map((permit) => (
+                    <tr
+                      key={permit._id}
+                      className="transition hover:bg-slate-50/70"
+                    >
+                      <td className="px-5 py-4">
+                        <p className="whitespace-nowrap text-xs font-semibold text-slate-800">
+                          {getPermitNumber(permit)}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-400">
+                          {getPermitTypeLabel(permit.permitType)}
+                        </p>
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <p className="max-w-[180px] truncate text-xs font-medium text-slate-700">
+                          {getApplicant(permit)}
+                        </p>
+                        <p className="mt-1 max-w-[180px] truncate text-[11px] text-slate-400">
+                          {permit.projectName || "N/A"}
+                        </p>
+                      </td>
+
+                      <td className="px-5 py-4 text-xs text-slate-500">
+                        {permit.projectLocation || "N/A"}
+                      </td>
+
+                      <td className="whitespace-nowrap px-5 py-4 text-xs text-slate-500">
+                        {formatDate(getPermitDate(permit))}
+                      </td>
+
+                      <td className="px-5 py-4">
+                        <StatusBadge
+                          status={
+                            permit.permitType === "building"
+                              ? "active"
+                              : "issued"
+                          }
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
 
           <div className="flex items-center justify-between border-t border-slate-100 px-5 py-3">
-            <p className="text-xs text-slate-400">Showing 5 recent records</p>
+            <p className="text-xs text-slate-400">
+              Showing {loading ? 0 : recentPermits.length} recent records
+            </p>
+
             <Link
               to="/permits"
               className="text-xs font-semibold text-brand-600 hover:underline"
@@ -222,38 +337,23 @@ export default function DashboardPage() {
         </section>
 
         <section className="rounded-xl border border-slate-200 bg-white p-5">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="font-semibold text-slate-900">Permits by Type</h2>
-              <p className="mt-1 text-xs text-slate-400">
-                Distribution of archived records
-              </p>
-            </div>
-
-            <button className="rounded-lg p-2 text-slate-400 hover:bg-slate-100">
-              <MoreHorizontal size={19} />
-            </button>
+          <div>
+            <h2 className="font-semibold text-slate-900">
+              Permits by Category
+            </h2>
+            <p className="mt-1 text-xs text-slate-400">
+              Distribution of archived records
+            </p>
           </div>
 
           <div className="my-7 flex items-center justify-center">
             <div
               className="relative flex h-40 w-40 items-center justify-center rounded-full"
-              style={{
-                background: `conic-gradient(
-                  #294f85 0% 34%,
-                  #3b82a6 34% 51.5%,
-                  #16a36b 51.5% 66.2%,
-                  #d69e36 66.2% 73.9%,
-                  #8b77bd 73.9% 80.9%,
-                  #d97777 80.9% 86.8%,
-                  #94a3b8 86.8% 90.2%,
-                  #cbd5e1 90.2% 100%
-                )`,
-              }}
+              style={{ background: chartBackground }}
             >
               <div className="flex h-28 w-28 flex-col items-center justify-center rounded-full bg-white">
                 <span className="text-2xl font-bold text-slate-900">
-                  {total.toLocaleString()}
+                  {loading ? "..." : total.toLocaleString()}
                 </span>
                 <span className="text-[10px] text-slate-400">
                   Total Records
@@ -262,37 +362,40 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          <div className="space-y-3">
-            {permitTypes.map((item, index) => {
+          <div className="space-y-4">
+            {permitTypes.map((item) => {
               const Icon = item.icon;
 
-              const colors = [
-                "text-brand-600 bg-brand-50",
-                "text-sky-600 bg-sky-50",
-                "text-emerald-600 bg-emerald-50",
-                "text-amber-600 bg-amber-50",
-                "text-violet-600 bg-violet-50",
-                "text-rose-600 bg-rose-50",
-                "text-slate-600 bg-slate-100",
-                "text-cyan-600 bg-cyan-50",
-              ];
-
               return (
-                <div
-                  key={item.name}
-                  className="flex items-center justify-between"
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`rounded-md p-1.5 ${colors[index]}`}>
-                      <Icon size={14} />
+                <div key={item.name}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={`rounded-md p-1.5 ${item.color}`}>
+                        <Icon size={14} />
+                      </div>
+
+                      <span className="text-xs text-slate-600">
+                        {item.name}
+                      </span>
                     </div>
 
-                    <span className="text-xs text-slate-600">{item.name}</span>
+                    <span className="text-xs font-semibold text-slate-800">
+                      {loading ? "..." : item.count.toLocaleString()}
+                    </span>
                   </div>
 
-                  <span className="text-xs font-semibold text-slate-800">
-                    {item.count.toLocaleString()}
-                  </span>
+                  <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+                    <div
+                      className="h-full rounded-full bg-brand-700 transition-all"
+                      style={{
+                        width: `${loading ? 0 : item.percentage}%`,
+                        backgroundColor:
+                          item.name === "Building Permit"
+                            ? "#294f85"
+                            : "#16a36b",
+                      }}
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -340,7 +443,7 @@ export default function DashboardPage() {
                 Encode New Permit
               </h3>
               <p className="mt-1 text-xs text-slate-400">
-                Add and archive a newly issued engineering permit.
+                Add and archive a newly issued permit.
               </p>
             </div>
           </div>

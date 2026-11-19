@@ -6,6 +6,7 @@ import AppLayout from "./components/layout/AppLayout";
 import ProtectedRoute from "./components/common/ProtectedRoute";
 
 import IssuePermitPage from "./pages/IssuePermitPage";
+import PermitsPage from "./pages/PermitsPage";
 
 export default function App() {
   return (
@@ -17,17 +18,9 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<DashboardPage />} />
 
-            {/* Temporary placeholders until these pages are created */}
-            <Route
-              path="/permits"
-              element={<Placeholder title="Permit Records" />}
-            />
+            <Route path="/permits" element={<PermitsPage />} />
 
-            <Route
-              path="/permits/new"
-               element={<IssuePermitPage />}
-            />        
-
+            <Route path="/permits/new" element={<IssuePermitPage />} />
 
             <Route
               path="/users"
