@@ -1,3 +1,4 @@
+
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -7,6 +8,7 @@ import {
   Settings,
   X,
   HardHat,
+  Archive,
 } from "lucide-react";
 
 const navigation = [
@@ -16,6 +18,7 @@ const navigation = [
       { name: "Dashboard", path: "/", icon: LayoutDashboard },
       { name: "Permit Records", path: "/permits", icon: Files },
       { name: "Issue New Permit", path: "/permits/new", icon: FilePlus2 },
+      { name: "Encode Old Records", path: "/permits/encode-old", icon: Archive },
     ],
   },
   {
